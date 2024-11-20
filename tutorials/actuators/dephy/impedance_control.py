@@ -4,31 +4,39 @@ import numpy as np
 
 import opensourceleg.actuators.dephy as Dephy
 from opensourceleg.logging.logger import LOGGER
+from opensourceleg.actuators.base import CONTROL_MODES
 
 actpack = Dephy.DephyActuator(
     port="/dev/ttyACM0",
-    gear_ratio=1.0,
+    gear_ratio=9.0,
 )
 
 with actpack:
     try:
-        actpack.set_control_mode(mode=actpack.CONTROL_MODES.IMPEDANCE)
+        actpack.set_control_mode(mode=CONTROL_MODES.IMPEDANCE)
+        actpack.set_control_mode(mode=CONTROL_MODES.IMPEDANCE)
         actpack.update()
-        k = 150
-        b = 600
+        k = 0
+        b = 0
         current_position = actpack.output_position
         while True:
             actpack.update()
             current_position = actpack.output_position
-            k += 100
             actpack.set_impedance_gains(
-                kp=40,
-                ki=400,
                 k=k,
                 b=b,
-                ff=128,
+                ff=128
             )
-            actpack.set_output_position(value=current_position + np.pi / 2)
+            actpack.set_motor_position(value=current_position)
+            LOGGER.info(
+                "".join(
+                    f"Motor Position: {actpack.motor_position}\t"
+                    + f"Motor Voltage: {actpack.motor_voltage}\t"
+                    + f"Motor Current: {actpack.motor_current}\t"
+                )
+            )
+            input("Changing motor's output position. Press Enter to continue...")
+            actpack.set_motor_position(value=current_position + np.pi / 2)
 
             LOGGER.info(
                 "".join(
@@ -37,7 +45,8 @@ with actpack:
                     + f"Motor Current: {actpack.motor_current}\t"
                 )
             )
-            input("Press Enter to continue...")
+            input("Increasing 'k' by 1. Press Enter to continue...")
+            k += 0
             time.sleep(0.2)
 
     except KeyboardInterrupt:
